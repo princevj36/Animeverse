@@ -23,16 +23,11 @@ const App = () => {
   return (
     <Routes>
       <Route path="/auth" element={<Auth />} />
-      <Route
-        path="/"
-        element={
-          <ProtectedRoute>
-            <Index />
-          </ProtectedRoute>
-        }
-      />
+      <Route path="/" element={<Index />} />
       <Route path="/shop" element={<Shop />} />
       <Route path="/product/:id" element={<ProductDetail />} />
+      
+      {/* Protected Routes - Require Authentication */}
       <Route
         path="/cart"
         element={
