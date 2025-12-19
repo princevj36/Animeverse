@@ -35,8 +35,8 @@ Replace `your_project_url_here` and `your_anon_key_here` with the values from St
 
 **Example:**
 ```env
-VITE_SUPABASE_URL=https://abcdefghijklmnop.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFiY2RlZmdoaWprbG1ub3AiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTYzODk2NzI4MCwiZXhwIjoxOTU0NTQzMjgwfQ.example
+VITE_SUPABASE_URL=https://wxdyggipqqjdhxytxxcj.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4ZHlnZ2lwcXFqZGh4eXR4eGNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU3MDU5MzcsImV4cCI6MjA4MTI4MTkzN30.addyp8Lrs4mAPUgEinG0a7bs7QeKAkZ9xVArWLS92hQ.example
 ```
 
 ## Step 4: Configure Authentication Settings
