@@ -357,7 +357,7 @@ const Checkout = () => {
             
             <div className="bg-white p-4 rounded-lg mb-4 flex justify-center">
               <QRCodeSVG 
-                value={`upi://pay?pa=9414378779-2@axl&pn=AnimeStore&am=${total}&tn=${orderId}`}
+                value={`upi://pay?pa=9414378779-2@axl&pn=AnimeStore&am=${total.toFixed(2)}&cu=INR&tn=${orderId}`}
                 size={200}
                 level="H"
                 includeMargin={true}
