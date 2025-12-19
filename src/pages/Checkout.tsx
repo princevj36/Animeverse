@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { MapPin, User, Mail, Phone, ArrowLeft, Loader2, QrCode } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
@@ -24,6 +24,7 @@ const Checkout = () => {
   const [discount, setDiscount] = useState(0);
   const [couponCode, setCouponCode] = useState('');
   const [orderId, setOrderId] = useState('');
+  const orderIdRef = useRef('');
 
   // Form data state
   const [formData, setFormData] = useState({
@@ -89,7 +90,7 @@ const Checkout = () => {
       
       // Create order data
       const orderData = {
-        orderId,
+        orderId: orderIdRef.current || orderId,
         customerName: `${formData.firstName} ${formData.lastName}`.trim(),
         email: formData.email,
         phone: formData.phone,
@@ -161,6 +162,7 @@ const Checkout = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const newOrderId = `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    orderIdRef.current = newOrderId;
     setOrderId(newOrderId);
     setShowQR(true);
   };
@@ -356,6 +358,7 @@ const Checkout = () => {
             
             <div className="bg-white p-4 rounded-lg mb-4 flex justify-center">
               <QRCodeSVG 
+                key={orderId}
                 value={`upi://pay?pa=9414378779-2@axl&pn=AnimeStore&am=${total}&tn=${orderId}`}
                 size={200}
                 level="H"
