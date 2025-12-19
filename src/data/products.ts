@@ -185,7 +185,7 @@ const animeFiguresImage140 = ['/images/anime-figures/140.jpg'];
 
 // Keychain Products (24) - Each with individual image from the 24 shared images
 const keychainProducts: Product[] = [
-  { id: 'kc1', name: 'Luffy Good Luck Keychain', description: 'One Piece Luffy keychain with "Good luck Best Wishes For You" strap.', price: 1, originalPrice: 1, images: keychainImage92, category: 'keychain', rating: 4.8, inStock: true, anime: 'One Piece' },
+  { id: 'kc1', name: 'Luffy Good Luck Keychain', description: 'One Piece Luffy keychain with "Good luck Best Wishes For You" strap.', price: 799, originalPrice: 599, images: keychainImage92, category: 'keychain', rating: 4.8, inStock: true, anime: 'One Piece' },
   { id: 'kc2', name: 'Franky ONE PIECE Keychain', description: 'One Piece Franky keychain with ONE PIECE strap and Jolly Roger logo.', price: 249, originalPrice: 349, images: keychainImage93, category: 'keychain', rating: 4.7, inStock: true, anime: 'One Piece' },
   { id: 'kc3', name: 'Nami ONE PIECE Keychain', description: 'One Piece Nami keychain with ONE PIECE strap and Jolly Roger logo.', price: 349, originalPrice: 499, images: keychainImage94, category: 'keychain', rating: 4.9, inStock: true, isRare: true, anime: 'One Piece' },
   { id: 'kc4', name: 'Usopp ONE PIECE Keychain', description: 'One Piece Usopp keychain with ONE PIECE strap and Jolly Roger logo.', price: 279, images: keychainImage95, category: 'keychain', rating: 4.6, inStock: true, anime: 'One Piece' },
