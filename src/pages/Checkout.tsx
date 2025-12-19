@@ -23,6 +23,7 @@ const Checkout = () => {
   const [paymentComplete, setPaymentComplete] = useState(false);
   const [discount, setDiscount] = useState(0);
   const [couponCode, setCouponCode] = useState('');
+  const [orderId, setOrderId] = useState('');
 
   // Form data state
   const [formData, setFormData] = useState({
@@ -87,7 +88,6 @@ const Checkout = () => {
       setIsProcessing(true);
       
       // Create order data
-      const orderId = `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
       const orderData = {
         orderId,
         customerName: `${formData.firstName} ${formData.lastName}`.trim(),
@@ -160,6 +160,8 @@ const Checkout = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const newOrderId = `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    setOrderId(newOrderId);
     setShowQR(true);
   };
 
@@ -354,7 +356,7 @@ const Checkout = () => {
             
             <div className="bg-white p-4 rounded-lg mb-4 flex justify-center">
               <QRCodeSVG 
-                value={`upi://pay?pa=9414378779-2@axl&pn=AnimeStore&am=${total}&tn=Order-${Date.now()}`}
+                value={`upi://pay?pa=9414378779-2@axl&pn=AnimeStore&am=${total}&tn=${orderId}`}
                 size={200}
                 level="H"
                 includeMargin={true}
