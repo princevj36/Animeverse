@@ -1,0 +1,315 @@
+@import url('https://fonts.googleapis.com/css2?family=Bangers&family=M+PLUS+Rounded+1c:wght@300;400;500;700;800;900&family=Righteous&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 222 47% 6%;
+    --foreground: 210 40% 98%;
+
+    --card: 222 47% 8%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222 47% 8%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 330 100% 60%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 185 100% 50%;
+    --secondary-foreground: 222 47% 6%;
+
+    --muted: 222 30% 15%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 45 100% 55%;
+    --accent-foreground: 222 47% 6%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 222 30% 18%;
+    --input: 222 30% 15%;
+    --ring: 330 100% 60%;
+
+    --radius: 0.75rem;
+
+    /* Custom anime theme colors */
+    --neon-pink: 330 100% 60%;
+    --neon-cyan: 185 100% 50%;
+    --neon-gold: 45 100% 55%;
+    --neon-purple: 270 100% 65%;
+    --dark-navy: 222 47% 6%;
+    --dark-card: 222 47% 10%;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(330, 100%, 60%), hsl(270, 100%, 65%));
+    --gradient-secondary: linear-gradient(135deg, hsl(185, 100%, 50%), hsl(200, 100%, 60%));
+    --gradient-accent: linear-gradient(135deg, hsl(45, 100%, 55%), hsl(30, 100%, 60%));
+    --gradient-dark: linear-gradient(180deg, hsl(222, 47%, 6%), hsl(222, 47%, 3%));
+
+    /* Glow effects */
+    --glow-pink: 0 0 20px hsl(330, 100%, 60%, 0.5);
+    --glow-cyan: 0 0 20px hsl(185, 100%, 50%, 0.5);
+    --glow-gold: 0 0 20px hsl(45, 100%, 55%, 0.5);
+
+    --sidebar-background: 222 47% 8%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 330 100% 60%;
+    --sidebar-primary-foreground: 210 40% 98%;
+    --sidebar-accent: 222 30% 15%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 222 30% 18%;
+    --sidebar-ring: 330 100% 60%;
+  }
+
+  .dark {
+    --background: 222 47% 6%;
+    --foreground: 210 40% 98%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-body antialiased;
+    background: var(--gradient-dark);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-display;
+    letter-spacing: 0.02em;
+    line-height: 1.2;
+  }
+
+  p,
+  span,
+  div {
+    @apply font-body;
+    letter-spacing: 0.01em;
+    line-height: 1.6;
+  }
+}
+
+@layer components {
+  .neon-text {
+    text-shadow:
+      0 0 8px hsl(var(--primary) / 0.8),
+      0 0 15px hsl(var(--primary) / 0.6),
+      0 0 25px hsl(var(--primary) / 0.4);
+    letter-spacing: 0.03em;
+    font-weight: 600;
+  }
+
+  .neon-text-cyan {
+    text-shadow:
+      0 0 8px hsl(var(--secondary) / 0.8),
+      0 0 15px hsl(var(--secondary) / 0.6),
+      0 0 25px hsl(var(--secondary) / 0.4);
+    letter-spacing: 0.03em;
+    font-weight: 600;
+  }
+
+  .anime-text {
+    font-family: 'Righteous', cursive;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-shadow:
+      1px 1px 2px rgba(0, 0, 0, 0.5),
+      0 0 8px hsl(var(--primary) / 0.4);
+    font-weight: 400;
+  }
+
+  .anime-title {
+    font-family: 'Righteous', cursive;
+    font-size: 2.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    text-shadow:
+      2px 2px 4px rgba(0, 0, 0, 0.7),
+      0 0 15px hsl(var(--primary) / 0.6),
+      0 0 30px hsl(var(--primary) / 0.4);
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--neon-purple)));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 8px hsl(var(--primary) / 0.5));
+  }
+
+  .neon-border {
+    box-shadow: 0 0 10px hsl(var(--primary) / 0.5), inset 0 0 10px hsl(var(--primary) / 0.1);
+  }
+
+  .neon-border-cyan {
+    box-shadow: 0 0 10px hsl(var(--secondary) / 0.5), inset 0 0 10px hsl(var(--secondary) / 0.1);
+  }
+
+  .glass-card {
+    @apply bg-card/80 backdrop-blur-xl border border-border/50;
+  }
+
+  .gradient-border {
+    position: relative;
+    background: hsl(var(--card));
+  }
+
+  .gradient-border::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    padding: 1px;
+    border-radius: inherit;
+    background: var(--gradient-primary);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  .anime-grid-bg {
+    background-image:
+      linear-gradient(hsl(var(--border) / 0.3) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--border) / 0.3) 1px, transparent 1px);
+    background-size: 50px 50px;
+  }
+}
+
+@layer utilities {
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .animate-pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+
+  .animate-slide-up {
+    animation: slide-up 0.5s ease-out;
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.5s ease-out;
+  }
+
+  .animate-text-shake {
+    animation: text-shake 0.5s ease-in-out infinite;
+  }
+
+  .animate-text-glow {
+    animation: text-glow 2s ease-in-out infinite;
+  }
+
+  .animate-anime-pop {
+    animation: anime-pop 0.3s ease-out;
+  }
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes pulse-glow {
+
+  0%,
+  100% {
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.5);
+  }
+
+  50% {
+    box-shadow: 0 0 40px hsl(var(--primary) / 0.8);
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes text-shake {
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  25% {
+    transform: translateX(-2px) rotate(-1deg);
+  }
+
+  75% {
+    transform: translateX(2px) rotate(1deg);
+  }
+}
+
+@keyframes text-glow {
+
+  0%,
+  100% {
+    text-shadow:
+      0 0 10px hsl(var(--primary)),
+      0 0 20px hsl(var(--primary)),
+      0 0 40px hsl(var(--primary));
+  }
+
+  50% {
+    text-shadow:
+      0 0 20px hsl(var(--primary)),
+      0 0 40px hsl(var(--primary)),
+      0 0 60px hsl(var(--primary)),
+      0 0 80px hsl(var(--primary) / 0.8);
+  }
+}
+
+@keyframes anime-pop {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+
+  50% {
+    transform: scale(1.1);
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
