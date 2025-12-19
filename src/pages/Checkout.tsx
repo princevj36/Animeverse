@@ -18,7 +18,6 @@ const Checkout = () => {
   const navigate = useNavigate();
 
   // State for form and UI
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showQR, setShowQR] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentComplete, setPaymentComplete] = useState(false);
@@ -119,23 +118,21 @@ const Checkout = () => {
         paymentMethod: 'UPI'
       };
 
-      // Save order data as JSON file
-      const dataStr = JSON.stringify(orderData, null, 2);
-      const dataBlob = new Blob([dataStr], { type: 'application/json' });
-      const downloadLink = document.createElement('a');
-      const url = URL.createObjectURL(dataBlob);
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      // Send order data to Google Sheets
+      // TODO: Replace with your actual Google Apps Script Web App URL
+      const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwpoSTn9AuTMiymYOz8BF-s3ml_jw_aKPbJpS86u0rHq14UQbck_p55N7O27ngzFZI/exec';
       
-      downloadLink.href = url;
-      downloadLink.download = `order_${orderId}_${timestamp}.json`;
-      document.body.appendChild(downloadLink);
-      downloadLink.click();
-      
-      // Clean up
-      setTimeout(() => {
-        document.body.removeChild(downloadLink);
-        URL.revokeObjectURL(url);
-      }, 100);
+      const response = await fetch(GOOGLE_SCRIPT_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain',
+        },
+        body: JSON.stringify(orderData)
+      });
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
 
       setPaymentComplete(true);
       clearCart();
@@ -158,7 +155,6 @@ const Checkout = () => {
       });
     } finally {
       setIsProcessing(false);
-      setIsSubmitting(false);
     }
   };
 
@@ -331,16 +327,8 @@ const Checkout = () => {
                   <Button
                     type="submit"
                     className="w-full"
-                    disabled={isSubmitting}
                   >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Processing...
-                      </>
-                    ) : (
-                      'Proceed to Payment'
-                    )}
+                    Proceed to Payment
                   </Button>
                 </CardContent>
               </Card>
