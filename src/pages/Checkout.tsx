@@ -1,36 +1,32 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { CreditCard, MapPin, User, Mail, Phone, Check, ArrowLeft, Loader2 } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { MapPin, User, Mail, Phone, ArrowLeft, Loader2, QrCode } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
+import { useNavigate, Link } from 'react-router-dom';
 import { useCartStore } from '@/store/cartStore';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useToast } from '@/components/ui/use-toast';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { toast } from 'sonner';
-// Background image can be added here if needed
-
 
 const Checkout = () => {
-  const { items, getTotalPrice, clearCart } = useCartStore();
+  const { items, clearCart } = useCartStore();
+  const { toast } = useToast();
   const navigate = useNavigate();
+
+  // State for form and UI
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showQR, setShowQR] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentComplete, setPaymentComplete] = useState(false);
+  const [discount, setDiscount] = useState(0);
+  const [couponCode, setCouponCode] = useState('');
 
-  interface FormData {
-    firstName: string;
-    lastName: string;
-    email: string;
-    phone: string;
-    address: string;
-    city: string;
-    state: string;
-    zipCode: string;
-    country: string;
-    cardNumber?: string;
-    expiryDate?: string;
-    cvv?: string;
-  }
-
-  const [formData, setFormData] = useState<FormData>({
+  // Form data state
+  const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
     email: '',
@@ -39,246 +35,137 @@ const Checkout = () => {
     city: '',
     state: '',
     zipCode: '',
-    country: 'India',
-    cardNumber: '',
-    expiryDate: '',
-    cvv: ''
+    country: 'India'
   });
-  
-  const [couponCode, setCouponCode] = useState('');
-  const [discount, setDiscount] = useState(0);
-  const [appliedCoupon, setAppliedCoupon] = useState('');
-  const [couponError, setCouponError] = useState('');
-  
+
+  // Calculate order totals
+  const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const gst = (subtotal - discount) * 0.18;
+  const total = Math.max(0, subtotal - discount + gst);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
   const applyCoupon = () => {
-    // Reset previous states
-    setCouponError('');
-    
-    // Check if coupon code is empty
     if (!couponCode.trim()) {
-      setCouponError('Please enter a coupon code');
+      toast({
+        title: "Error",
+        description: "Please enter a coupon code",
+        variant: "destructive",
+      });
       return;
     }
-    
-    // In a real app, you would validate the coupon with your backend
-    // For demo purposes, we'll use a simple check
-    const validCoupons = {
-      'WELCOME10': 0.1,    // 10% off
-      'FREESHIP': 0,       // Free shipping (handled differently in real app)
-      'ANIME20': 0.2,      // 20% off
-      'FIRSTORDER': 0.15   // 15% off for first order
+
+    // Simple coupon logic
+    const coupons: Record<string, number> = {
+      'WELCOME10': 0.1,
+      'FREESHIP': 0,
+      'ANIME20': 0.2
     };
-    
-    const discountPercentage = validCoupons[couponCode.toUpperCase()];
+
+    const discountPercentage = coupons[couponCode.toUpperCase()];
     
     if (discountPercentage !== undefined) {
       const newDiscount = subtotal * discountPercentage;
       setDiscount(newDiscount);
-      setAppliedCoupon(couponCode.toUpperCase());
-      toast.success(`Coupon applied: ${couponCode.toUpperCase()}`);
+      toast({
+        title: "Coupon Applied!",
+        description: `Discount of ${discountPercentage * 100}% has been applied.`,
+      });
     } else {
-      setCouponError('Invalid coupon code');
-      setDiscount(0);
-      setAppliedCoupon('');
-    }
-  };
-  
-  const removeCoupon = () => {
-    setDiscount(0);
-    setAppliedCoupon('');
-    setCouponCode('');
-    setCouponError('');
-  };
-  
-  const [paymentMethod, setPaymentMethod] = useState('card');
-  const [isProcessing, setIsProcessing] = useState(false);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    // Format card number with spaces after every 4 digits
-    if (name === 'cardNumber') {
-      const formattedValue = value
-        .replace(/\s/g, '')
-        .match(/.{1,4}/g)
-        ?.join(' ')
-        .substring(0, 19) || '';
-      setFormData({ ...formData, [name]: formattedValue });
-    } 
-    // Format expiry date as MM/YY
-    else if (name === 'expiryDate') {
-      const formattedValue = value
-        .replace(/\D/g, '')
-        .replace(/^(\d{2})/, '$1/')
-        .substring(0, 5);
-      setFormData({ ...formData, [name]: formattedValue });
-    }
-    // Limit CVV to 3-4 digits
-    else if (name === 'cvv') {
-      const formattedValue = value.replace(/\D/g, '').substring(0, 4);
-      setFormData({ ...formData, [name]: formattedValue });
-    }
-    else {
-      setFormData({ ...formData, [name]: value });
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setIsProcessing(true);
-
-    try {
-      if (paymentMethod === 'razorpay') {
-        await handleRazorpayPayment();
-      } else if (paymentMethod === 'gpay') {
-        // GPay would be handled through Razorpay's GPay integration
-        await handleRazorpayPayment('gpay');
-      } else if (paymentMethod === 'card') {
-        // Process card payment (in a real app, you would use a payment processor)
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        completeOrder();
-      } else {
-        // Other payment methods
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        completeOrder();
-      }
-    } catch (error) {
-      console.error('Payment error:', error);
-      toast.error('Payment failed. Please try again.');
-      setIsSubmitting(false);
-      setIsProcessing(false);
-    }
-  };
-
-  const completeOrder = () => {
-    clearCart();
-    toast.success('Order placed successfully!');
-    navigate('/order-success');
-  };
-
-  const createRazorpayOrder = async (amount: number) => {
-    try {
-      const response = await fetch('http://localhost:5000/api/payments/create-order', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          amount: amount,
-          currency: 'INR',
-          receipt: `order_${Date.now()}`,
-        }),
+      toast({
+        title: "Invalid Coupon",
+        description: "The coupon code you entered is not valid.",
+        variant: "destructive",
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to create order');
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error('Error creating order:', error);
-      throw error;
     }
   };
 
-  const verifyPayment = async (paymentDetails: any) => {
+  const completeOrder = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/payments/verify', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(paymentDetails),
-      });
-
-      if (!response.ok) {
-        throw new Error('Payment verification failed');
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error('Error verifying payment:', error);
-      throw error;
-    }
-  };
-
-  const handleRazorpayPayment = async (method = 'netbanking') => {
-    try {
-      // First create an order on the backend
-      const orderData = await createRazorpayOrder(total);
+      setIsProcessing(true);
       
-      const options = {
-        key: orderData.key,
-        amount: orderData.order.amount,
-        currency: orderData.order.currency,
-        order_id: orderData.order.id,
-        name: 'AnimeVerse',
-        description: 'Payment for your order',
-        image: '/logo.png',
-        handler: async function(response: any) {
-          try {
-            // Verify the payment on the backend
-            await verifyPayment(response);
-            completeOrder();
-          } catch (error) {
-            console.error('Payment verification failed:', error);
-            toast.error('Payment verification failed. Please contact support.');
-            setIsSubmitting(false);
-            setIsProcessing(false);
-          }
+      // Create order data
+      const orderId = `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+      const orderData = {
+        orderId,
+        customerName: `${formData.firstName} ${formData.lastName}`.trim(),
+        email: formData.email,
+        phone: formData.phone,
+        address: {
+          street: formData.address,
+          city: formData.city,
+          state: formData.state,
+          zipCode: formData.zipCode,
+          country: formData.country
         },
-        prefill: {
-          name: `${formData.firstName} ${formData.lastName}`.trim(),
-          email: formData.email,
-          contact: formData.phone,
+        items: items.map(item => ({
+          productId: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          subtotal: item.price * item.quantity
+        })),
+        orderSummary: {
+          subtotal,
+          discount,
+          gst,
+          total
         },
-        notes: {
-          address: formData.address,
-          order_id: orderData.order.id,
-        },
-        theme: {
-          color: '#7C3AED',
-        },
-        method: method === 'gpay' ? 'upi' : method,
-        modal: {
-          ondismiss: function() {
-            // Handle modal dismissal
-            setIsSubmitting(false);
-            setIsProcessing(false);
-          }
-        }
+        paymentStatus: 'completed',
+        orderDate: new Date().toISOString(),
+        paymentMethod: 'UPI'
       };
 
-      // @ts-ignore
-      const rzp = new window.Razorpay(options);
-      rzp.open();
+      // Save order data as JSON file
+      const dataStr = JSON.stringify(orderData, null, 2);
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      const downloadLink = document.createElement('a');
+      const url = URL.createObjectURL(dataBlob);
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
       
-      rzp.on('payment.failed', function(response: any) {
-        console.error('Payment failed:', response.error);
-        toast.error(`Payment failed: ${response.error.description || 'Please try again'}`);
-        setIsSubmitting(false);
-        setIsProcessing(false);
+      downloadLink.href = url;
+      downloadLink.download = `order_${orderId}_${timestamp}.json`;
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      
+      // Clean up
+      setTimeout(() => {
+        document.body.removeChild(downloadLink);
+        URL.revokeObjectURL(url);
+      }, 100);
+
+      setPaymentComplete(true);
+      clearCart();
+      toast({
+        title: "Order Placed!",
+        description: "Your order has been placed successfully!",
       });
+
+      // Navigate to success page after a short delay
+      setTimeout(() => {
+        navigate('/order-success', { state: { orderId } });
+      }, 2000);
       
     } catch (error) {
-      console.error('Error in payment process:', error);
-      toast.error('Error processing payment. Please try again.');
-      setIsSubmitting(false);
+      console.error('Error completing order:', error);
+      toast({
+        title: "Error",
+        description: "Failed to process order. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
       setIsProcessing(false);
+      setIsSubmitting(false);
     }
   };
 
-  // Load Razorpay script
-  useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-    script.async = true;
-    document.body.appendChild(script);
-
-    return () => {
-      document.body.removeChild(script);
-    };
-  }, []);
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setShowQR(true);
+  };
 
   if (items.length === 0) {
     return (
@@ -286,9 +173,9 @@ const Checkout = () => {
         <Navbar />
         <main className="pt-24 pb-16">
           <div className="container mx-auto px-4 text-center py-20">
-            <h1 className="font-display text-3xl font-bold mb-4">Your cart is empty</h1>
+            <h1 className="text-3xl font-bold mb-4">Your cart is empty</h1>
             <Link to="/shop">
-              <Button variant="neon">Go Shopping</Button>
+              <Button>Continue Shopping</Button>
             </Link>
           </div>
         </main>
@@ -297,427 +184,225 @@ const Checkout = () => {
     );
   }
 
-  const subtotal = getTotalPrice();
-  const gst = (subtotal - discount) * 0.18;
-  const total = subtotal - discount + gst;
-
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-
       <main className="pt-24 pb-16">
         <div className="container mx-auto px-4">
-          <Link
-            to="/cart"
-            className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors mb-8"
-          >
+          <Link to="/cart" className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary mb-6">
             <ArrowLeft className="w-4 h-4" />
             Back to Cart
           </Link>
 
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="font-display text-3xl md:text-4xl font-bold mb-8"
-          >
-            <span className="neon-text">Checkout</span>
-          </motion.h1>
+          <h1 className="text-3xl font-bold mb-8">Checkout</h1>
 
-          <form onSubmit={handleSubmit}>
-            <div className="grid lg:grid-cols-3 gap-8">
-              {/* Form Fields */}
-              <div className="lg:col-span-2 space-y-8">
-                {/* Contact Information */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="glass-card rounded-xl p-6"
-                >
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="p-2 bg-primary/20 rounded-lg">
-                      <User className="w-5 h-5 text-primary" />
-                    </div>
-                    <h2 className="font-display text-xl font-bold">Contact Information</h2>
+          <form onSubmit={handleSubmit} className="grid md:grid-cols-3 gap-8">
+            <div className="md:col-span-2 space-y-6">
+              {/* Billing Details */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Billing Details</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Input
+                      name="firstName"
+                      placeholder="First Name *"
+                      required
+                      value={formData.firstName}
+                      onChange={handleChange}
+                    />
+                    <Input
+                      name="lastName"
+                      placeholder="Last Name *"
+                      required
+                      value={formData.lastName}
+                      onChange={handleChange}
+                    />
                   </div>
-
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-2">First Name</label>
-                      <input
-                        type="text"
-                        name="firstName"
-                        value={formData.firstName}
-                        onChange={handleChange}
-                        className="w-full px-4 py-3 bg-muted rounded-lg border border-border focus:border-primary focus:outline-none"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Last Name</label>
-                      <input
-                        type="text"
-                        name="lastName"
-                        value={formData.lastName}
-                        onChange={handleChange}
-                        className="w-full px-4 py-3 bg-muted rounded-lg border border-border focus:border-primary focus:outline-none"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Email</label>
-                      <div className="relative">
-                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                        <input
-                          type="email"
-                          name="email"
-                          value={formData.email}
-                          onChange={handleChange}
-                          className="w-full pl-12 pr-4 py-3 bg-muted rounded-lg border border-border focus:border-primary focus:outline-none"
-                          required
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Phone</label>
-                      <div className="relative">
-                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                        <input
-                          type="tel"
-                          name="phone"
-                          value={formData.phone}
-                          onChange={handleChange}
-                          placeholder="+91"
-                          className="w-full pl-12 pr-4 py-3 bg-muted rounded-lg border border-border focus:border-primary focus:outline-none"
-                          required
-                        />
-                      </div>
-                    </div>
+                  <Input
+                    name="email"
+                    type="email"
+                    placeholder="Email *"
+                    required
+                    value={formData.email}
+                    onChange={handleChange}
+                  />
+                  <Input
+                    name="phone"
+                    type="tel"
+                    placeholder="Phone *"
+                    required
+                    value={formData.phone}
+                    onChange={handleChange}
+                  />
+                  <Textarea
+                    name="address"
+                    placeholder="Address *"
+                    required
+                    value={formData.address}
+                    onChange={handleChange}
+                  />
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Input
+                      name="city"
+                      placeholder="City *"
+                      required
+                      value={formData.city}
+                      onChange={handleChange}
+                    />
+                    <Input
+                      name="state"
+                      placeholder="State *"
+                      required
+                      value={formData.state}
+                      onChange={handleChange}
+                    />
+                    <Input
+                      name="zipCode"
+                      placeholder="ZIP Code *"
+                      required
+                      value={formData.zipCode}
+                      onChange={handleChange}
+                    />
                   </div>
-                </motion.div>
+                </CardContent>
+              </Card>
+            </div>
 
-                {/* Shipping Address */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 }}
-                  className="glass-card rounded-xl p-6"
-                >
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="p-2 bg-secondary/20 rounded-lg">
-                      <MapPin className="w-5 h-5 text-secondary" />
-                    </div>
-                    <h2 className="font-display text-xl font-bold">Shipping Address</h2>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Address</label>
-                      <input
-                        type="text"
-                        name="address"
-                        value={formData.address}
-                        onChange={handleChange}
-                        className="w-full px-4 py-3 bg-muted rounded-lg border border-border focus:border-primary focus:outline-none"
-                        required
-                      />
-                    </div>
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium mb-2">City</label>
-                        <input
-                          type="text"
-                          name="city"
-                          value={formData.city}
-                          onChange={handleChange}
-                          className="w-full px-4 py-3 bg-muted rounded-lg border border-border focus:border-primary focus:outline-none"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-2">State</label>
-                        <input
-                          type="text"
-                          name="state"
-                          value={formData.state}
-                          onChange={handleChange}
-                          className="w-full px-4 py-3 bg-muted rounded-lg border border-border focus:border-primary focus:outline-none"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-2">PIN Code</label>
-                        <input
-                          type="text"
-                          name="zipCode"
-                          value={formData.zipCode}
-                          onChange={handleChange}
-                          className="w-full px-4 py-3 bg-muted rounded-lg border border-border focus:border-primary focus:outline-none"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-2">Country</label>
-                        <input
-                          type="text"
-                          name="country"
-                          value={formData.country}
-                          onChange={handleChange}
-                          className="w-full px-4 py-3 bg-muted rounded-lg border border-border focus:border-primary focus:outline-none"
-                          required
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-
-                {/* Payment */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                  className="glass-card rounded-xl p-6"
-                >
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="p-2 bg-accent/20 rounded-lg">
-                      <CreditCard className="w-5 h-5 text-accent" />
-                    </div>
-                    <h2 className="font-display text-xl font-bold">Payment Method</h2>
-                  </div>
-
-                  <div className="space-y-4">
-                    {/* Credit/Debit Card */}
-                    <div 
-                      className={`p-4 rounded-lg border-2 cursor-pointer transition-colors ${paymentMethod === 'card' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'}`}
-                      onClick={() => setPaymentMethod('card')}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${paymentMethod === 'card' ? 'border-primary bg-primary' : 'border-muted-foreground'}`}>
-                            {paymentMethod === 'card' && <Check className="w-3 h-3 text-white" />}
-                          </div>
-                          <span className="font-medium">Credit/Debit Card</span>
-                        </div>
-                        <div className="flex gap-2">
-                          <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/visa/visa-original.svg" alt="Visa" className="h-6" />
-                          <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mastercard/mastercard-original.svg" alt="Mastercard" className="h-6" />
-                        </div>
-                      </div>
-                      
-                      {paymentMethod === 'card' && (
-                        <div className="mt-4 space-y-4">
-                          <div>
-                            <label className="block text-sm font-medium mb-2">Card Number</label>
-                            <input
-                              type="text"
-                              name="cardNumber"
-                              value={formData.cardNumber}
-                              onChange={handleChange}
-                              placeholder="1234 5678 9012 3456"
-                              className="w-full px-4 py-3 bg-muted rounded-lg border border-border focus:border-primary focus:outline-none"
-                              required
-                            />
-                          </div>
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <label className="block text-sm font-medium mb-2">Expiry Date</label>
-                              <input
-                                type="text"
-                                name="expiryDate"
-                                value={formData.expiryDate}
-                                onChange={handleChange}
-                                placeholder="MM/YY"
-                                className="w-full px-4 py-3 bg-muted rounded-lg border border-border focus:border-primary focus:outline-none"
-                                required
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-sm font-medium mb-2">CVV</label>
-                              <input
-                                type="text"
-                                name="cvv"
-                                value={formData.cvv}
-                                onChange={handleChange}
-                                placeholder="123"
-                                className="w-full px-4 py-3 bg-muted rounded-lg border border-border focus:border-primary focus:outline-none"
-                                required
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* GPay */}
-                    <div 
-                      className={`p-4 rounded-lg border-2 cursor-pointer transition-colors ${paymentMethod === 'gpay' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'}`}
-                      onClick={() => setPaymentMethod('gpay')}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${paymentMethod === 'gpay' ? 'border-primary bg-primary' : 'border-muted-foreground'}`}>
-                            {paymentMethod === 'gpay' && <Check className="w-3 h-3 text-white" />}
-                          </div>
-                          <span className="font-medium">Google Pay</span>
-                        </div>
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Google_%22G%22_Logo.svg/200px-Google_%22G%22_Logo.svg.png" alt="GPay" className="h-6" />
-                      </div>
-                    </div>
-
-                    {/* Razorpay UPI */}
-                    <div 
-                      className={`p-4 rounded-lg border-2 cursor-pointer transition-colors ${paymentMethod === 'razorpay' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'}`}
-                      onClick={() => setPaymentMethod('razorpay')}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${paymentMethod === 'razorpay' ? 'border-primary bg-primary' : 'border-muted-foreground'}`}>
-                            {paymentMethod === 'razorpay' && <Check className="w-3 h-3 text-white" />}
-                          </div>
-                          <span className="font-medium">UPI / Netbanking</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <img src="https://razorpay.com/build/browser/static/razorpay-logo.5a47d3f4.svg" alt="Razorpay" className="h-6" />
-                        </div>
-                      </div>
-                      {paymentMethod === 'razorpay' && (
-                        <p className="text-sm text-muted-foreground mt-2">You'll be redirected to Razorpay's secure payment page</p>
-                      )}
-                    </div>
-
-                    {/* Other Payment Options */}
-                    <div 
-                      className={`p-4 rounded-lg border-2 cursor-pointer transition-colors ${paymentMethod === 'cod' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'}`}
-                      onClick={() => setPaymentMethod('cod')}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${paymentMethod === 'cod' ? 'border-primary bg-primary' : 'border-muted-foreground'}`}>
-                            {paymentMethod === 'cod' && <Check className="w-3 h-3 text-white" />}
-                          </div>
-                          <span className="font-medium">Cash on Delivery</span>
-                        </div>
-                        <span className="text-sm text-muted-foreground">Pay when you receive</span>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              </div>
-
-              {/* Order Summary */}
-              <div className="lg:col-span-1">
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="glass-card rounded-xl p-6 sticky top-24"
-                >
-                  <h2 className="font-display text-xl font-bold mb-6">Order Summary</h2>
-
-                  <div className="space-y-4 mb-6">
+            {/* Order Summary */}
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Your Order</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
                     {items.map((item) => (
-                      <div key={item.id} className="flex gap-3">
-                        <img
-                          src={item.images[0]}
-                          alt={item.name}
-                          className="w-16 h-16 object-cover rounded-lg"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm line-clamp-1">{item.name}</p>
-                          <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p>
-                          <p className="text-sm font-bold text-primary">
-                            ₹{(item.price * item.quantity).toLocaleString('en-IN')}
-                          </p>
-                        </div>
+                      <div key={item.id} className="flex justify-between">
+                        <span>
+                          {item.name} × {item.quantity}
+                        </span>
+                        <span>₹{(item.price * item.quantity).toFixed(2)}</span>
                       </div>
                     ))}
                   </div>
 
-                  {/* Coupon Code */}
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium mb-2">Coupon Code</label>
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={couponCode}
-                        onChange={(e) => setCouponCode(e.target.value)}
-                        placeholder="Enter coupon code"
-                        className="flex-1 px-4 py-2 bg-muted rounded-lg border border-border focus:border-primary focus:outline-none text-sm"
-                        disabled={!!appliedCoupon}
-                      />
-                      {appliedCoupon ? (
-                        <button
-                          type="button"
-                          onClick={removeCoupon}
-                          className="px-4 py-2 bg-red-500 text-white rounded-lg text-sm hover:bg-red-600 transition-colors"
-                        >
-                          Remove
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={applyCoupon}
-                          className="px-4 py-2 bg-primary text-white rounded-lg text-sm hover:bg-primary/90 transition-colors"
-                        >
-                          Apply
-                        </button>
-                      )}
-                    </div>
-                    {couponError && (
-                      <p className="text-red-500 text-xs mt-1">{couponError}</p>
-                    )}
-                    {appliedCoupon && (
-                      <p className="text-green-500 text-xs mt-1">Coupon {appliedCoupon} applied successfully!</p>
-                    )}
-                  </div>
-
-                  <div className="border-t border-border pt-4 space-y-3">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Subtotal</span>
-                      <span>₹{subtotal.toLocaleString('en-IN')}</span>
+                  <div className="border-t pt-4 space-y-2">
+                    <div className="flex justify-between">
+                      <span>Subtotal</span>
+                      <span>₹{subtotal.toFixed(2)}</span>
                     </div>
                     {discount > 0 && (
-                      <div className="flex justify-between text-sm text-green-500">
-                        <span>Discount ({appliedCoupon})</span>
-                        <span>-₹{discount.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span>
+                      <div className="flex justify-between text-green-600">
+                        <span>Discount</span>
+                        <span>-₹{discount.toFixed(2)}</span>
                       </div>
                     )}
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Shipping</span>
-                      <span className="text-secondary">Free</span>
+                    <div className="flex justify-between">
+                      <span>GST (18%)</span>
+                      <span>₹{gst.toFixed(2)}</span>
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">GST (18%)</span>
-                      <span>₹{gst.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span>
+                    <div className="flex justify-between font-bold text-lg pt-2 border-t">
+                      <span>Total</span>
+                      <span>₹{total.toFixed(2)}</span>
                     </div>
-                    <div className="border-t border-border pt-3 flex justify-between">
-                      <span className="font-display font-bold">Total</span>
-                      <span className="font-display font-bold text-xl text-primary">
-                        ₹{total.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
-                      </span>
+                  </div>
+
+                  <div className="pt-4">
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Coupon code"
+                        value={couponCode}
+                        onChange={(e) => setCouponCode(e.target.value)}
+                        className="flex-1"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={applyCoupon}
+                        disabled={!couponCode.trim()}
+                      >
+                        Apply
+                      </Button>
                     </div>
                   </div>
 
                   <Button
                     type="submit"
-                    variant="neon"
-                    size="lg"
-                    className="w-full mt-6 h-12 text-base"
-                    disabled={isSubmitting || isProcessing}
+                    className="w-full"
+                    disabled={isSubmitting}
                   >
-                    {isProcessing ? (
+                    {isSubmitting ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         Processing...
                       </>
                     ) : (
-                      `Pay ₹${total.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`
+                      'Proceed to Payment'
                     )}
                   </Button>
-                </motion.div>
-              </div>
+                </CardContent>
+              </Card>
             </div>
           </form>
         </div>
       </main>
+
+      {/* QR Code Modal */}
+      {showQR && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-background p-6 rounded-lg max-w-md w-full">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Complete Your Payment</h3>
+              <button 
+                onClick={() => setShowQR(false)} 
+                className="text-muted-foreground hover:text-foreground"
+                disabled={isProcessing}
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="bg-white p-4 rounded-lg mb-4 flex justify-center">
+              <QRCodeSVG 
+                value={`upi://pay?pa=9414378779-2@axl&pn=AnimeStore&am=${total}&tn=Order-${Date.now()}`}
+                size={200}
+                level="H"
+                includeMargin={true}
+              />
+            </div>
+            
+            <p className="text-sm text-muted-foreground mb-4 text-center">
+              Scan the QR code to complete payment
+            </p>
+            
+            <div className="flex justify-center gap-4">
+              <Button
+                variant="outline"
+                onClick={() => setShowQR(false)}
+                disabled={isProcessing}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={completeOrder}
+                disabled={isProcessing}
+                className="bg-primary hover:bg-primary/90"
+              >
+                {isProcessing ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  'I have paid'
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>

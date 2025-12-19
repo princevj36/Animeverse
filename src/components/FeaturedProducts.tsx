@@ -5,7 +5,15 @@ import vi3 from '@/assets/vi3.mp4';
 
 
 const FeaturedProducts = () => {
-  const featuredProducts = products.slice(0, 8);
+  // Get all unique categories
+  const categories = [...new Set(products.map(product => product.category))];
+  
+  // Get one random product from each category
+  const featuredProducts = categories.map(category => {
+    const categoryProducts = products.filter(p => p.category === category);
+    const randomIndex = Math.floor(Math.random() * categoryProducts.length);
+    return categoryProducts[randomIndex];
+  }).filter(Boolean); // Remove any undefined entries
 
   return (
     <section className="py-20 relative">
