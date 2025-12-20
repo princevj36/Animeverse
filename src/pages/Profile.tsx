@@ -65,7 +65,7 @@ const Profile = () => {
             {/* Quick Actions */}
             <div className="grid sm:grid-cols-2 gap-4 mb-8">
               <Link
-                to="/orders"
+                to="/cart"
                 className="glass-card rounded-xl p-6 flex items-center gap-4 hover:neon-border transition-all"
               >
                 <div className="p-3 bg-primary/20 rounded-lg">
