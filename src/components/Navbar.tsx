@@ -193,32 +193,13 @@ const Navbar = () => {
               >
                 Rare Items
               </Link>
-              {isAuthenticated ? (
-                <>
-                  <Link
-                    to="/profile"
-                    onClick={() => setIsMenuOpen(false)}
-                    className="block py-2 font-medium hover:text-primary transition-colors"
-                  >
-                    Profile
-                  </Link>
-                  <button
-                    onClick={() => {
-                      logout();
-                      setIsMenuOpen(false);
-                    }}
-                    className="block py-2 font-medium text-destructive hover:text-destructive/80 transition-colors"
-                  >
-                    Logout
-                  </button>
-                </>
-              ) : (
-                <Link to="/auth" onClick={() => setIsMenuOpen(false)}>
-                  <Button variant="neon" className="w-full mt-2">
-                    Login / Sign Up
-                  </Button>
-                </Link>
-              )}
+              <Link
+                to="/profile"
+                onClick={() => setIsMenuOpen(false)}
+                className="block py-2 font-medium hover:text-primary transition-colors"
+              >
+                Profile
+              </Link>
             </div>
           </motion.div>
         )}
