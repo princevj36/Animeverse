@@ -106,11 +106,20 @@ export const useAuthStore = create<AuthStore>()(
             email,
             password,
             options: {
+              emailRedirectTo: window.location.origin,
               data: {
                 name: name,
               },
             },
           });
+          
+          // Auto-confirm the user
+          if (data.user) {
+            await supabase.auth.signInWithPassword({
+              email,
+              password,
+            });
+          }
 
           if (error) {
             console.error('Signup error:', error.message);
