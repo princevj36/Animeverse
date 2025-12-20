@@ -102,38 +102,38 @@ export const useAuthStore = create<AuthStore>()(
 
       signup: async (name: string, email: string, password: string) => {
         try {
-          const { data, error } = await supabase.auth.signUp({
+          // First, sign up the user
+          const { error: signUpError } = await supabase.auth.signUp({
             email,
             password,
             options: {
               emailRedirectTo: window.location.origin,
-              data: {
-                name: name,
-              },
+              data: { name },
             },
           });
           
-          // Auto-confirm the user
-          if (data.user) {
-            await supabase.auth.signInWithPassword({
-              email,
-              password,
-            });
-          }
-
-          if (error) {
-            console.error('Signup error:', error.message);
-            return false;
-          }
-
-          if (data.user) {
-            const user = mapSupabaseUser(data.user, { name });
-            set({
-              user,
-              isAuthenticated: true,
-            });
-            return true;
-          }
+          if (signUpError) throw signUpError;
+          
+          // Then immediately sign in the user
+          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
+          
+          if (signInError) throw signInError;
+          
+          // Update the user's metadata with their name
+          await supabase.auth.updateUser({
+            data: { name }
+          });
+          
+          const user = mapSupabaseUser(signInData.user, { name });
+          
+          set({
+            user,
+            isAuthenticated: true,
+          });
+          return true;
 
           return false;
         } catch (error) {
