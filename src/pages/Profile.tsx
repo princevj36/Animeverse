@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { User, Mail, Package, Heart, Settings } from 'lucide-react';
+import { User, Mail, Package, Heart, Settings, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -73,18 +73,18 @@ const Profile = () => {
                 </div>
               </div>
 
-              <button
-                onClick={handleLogout}
-                className="glass-card rounded-xl p-6 flex items-center gap-4 hover:border-destructive transition-all text-left"
+              <Link
+                to="/"
+                className="glass-card rounded-xl p-6 flex items-center gap-4 hover:border-primary transition-all text-left"
               >
-                <div className="p-3 bg-destructive/20 rounded-lg">
-                  <LogOut className="w-6 h-6 text-destructive" />
+                <div className="p-3 bg-primary/20 rounded-lg">
+                  <LogOut className="w-6 h-6 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-display font-semibold text-destructive">Logout</h3>
-                  <p className="text-sm text-muted-foreground">Sign out</p>
+                  <h3 className="font-display font-semibold">Back to Home</h3>
+                  <p className="text-sm text-muted-foreground">Return to homepage</p>
                 </div>
-              </button>
+              </Link>
             </div>
           </motion.div>
         </div>
