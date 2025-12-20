@@ -1,10 +1,14 @@
+// Navbar with auth
+
 import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingCart, Heart, User, Menu, Search, X } from 'lucide-react';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCartStore } from '@/store/cartStore';
 import { useWishlistStore } from '@/store/wishlistStore';
+import { useAuthStore } from '@/store/authStore';
 import { products } from '@/data/products';
+import { Button } from '@/components/ui/button';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -13,6 +17,7 @@ const Navbar = () => {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const cartItems = useCartStore((state) => state.getTotalItems());
   const wishlistItems = useWishlistStore((state) => state.items.length);
+  const { isAuthenticated, logout } = useAuthStore();
   const navigate = useNavigate();
 
   // Filter products based on search query
@@ -94,9 +99,22 @@ const Navbar = () => {
               )}
             </Link>
 
-            <Link to="/profile" className="p-2 hover:bg-muted rounded-lg transition-colors">
-              <User className="w-5 h-5" />
-            </Link>
+            {isAuthenticated ? (
+              <div className="hidden md:flex items-center gap-2">
+                <Link to="/profile" className="p-2 hover:bg-muted rounded-lg transition-colors">
+                  <User className="w-5 h-5" />
+                </Link>
+                <Button variant="ghost" size="sm" onClick={logout}>
+                  Logout
+                </Button>
+              </div>
+            ) : (
+              <Link to="/auth" className="hidden md:block">
+                <Button variant="neon" size="sm">
+                  Login
+                </Button>
+              </Link>
+            )}
 
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -193,13 +211,32 @@ const Navbar = () => {
               >
                 Rare Items
               </Link>
-              <Link
-                to="/profile"
-                onClick={() => setIsMenuOpen(false)}
-                className="block py-2 font-medium hover:text-primary transition-colors"
-              >
-                Profile
-              </Link>
+              {isAuthenticated ? (
+                <>
+                  <Link
+                    to="/profile"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="block py-2 font-medium hover:text-primary transition-colors"
+                  >
+                    Profile
+                  </Link>
+                  <button
+                    onClick={() => {
+                      logout();
+                      setIsMenuOpen(false);
+                    }}
+                    className="block py-2 font-medium text-destructive hover:text-destructive/80 transition-colors"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <Link to="/auth" onClick={() => setIsMenuOpen(false)}>
+                  <Button variant="neon" className="w-full mt-2">
+                    Login / Sign Up
+                  </Button>
+                </Link>
+              )}
             </div>
           </motion.div>
         )}
