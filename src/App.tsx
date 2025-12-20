@@ -11,7 +11,6 @@ import Checkout from "./pages/Checkout";
 import OrderSuccess from "./pages/OrderSuccess";
 import Wishlist from "./pages/Wishlist";
 import Profile from "./pages/Profile";
-import Orders from "./pages/Orders";
 import NotFound from "./pages/NotFound";
 
 const App = () => {
@@ -66,14 +65,6 @@ const App = () => {
         element={
           <ProtectedRoute>
             <Profile />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/orders"
-        element={
-          <ProtectedRoute>
-            <Orders />
           </ProtectedRoute>
         }
       />
