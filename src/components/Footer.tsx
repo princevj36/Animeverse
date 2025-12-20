@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Instagram, Twitter, Facebook, Mail, Truck, RefreshCw, Headset, MapPin, Phone } from 'lucide-react';
+import { Instagram, Mail, Truck, RefreshCw, Headset, Phone, MapPin } from 'lucide-react';
 import logo from '@/assets/categories/logo.jpg';
 
 const FeatureItem = ({ icon: Icon, title, description }: { icon: any, title: string, description: string }) => (
@@ -54,27 +54,28 @@ const Footer = () => {
             </p>
             <div className="space-y-2 mt-4">
               <div className="flex items-center text-gray-400">
-                <MapPin className="w-4 h-4 mr-2" />
+                <MapPin className="w-4 h-4 mr-2 flex-shrink-0" />
                 <span>Jaipur, Rajasthan</span>
               </div>
               <div className="flex items-center text-gray-400">
-                <Phone className="w-4 h-4 mr-2" />
-                <a href="tel:+919414378779" className="hover:text-white transition-colors">+91 94143 78779</a>
+                <Phone className="w-4 h-4 mr-2 flex-shrink-0" />
+                <a href="tel:9414378779" className="hover:text-white transition-colors">9414378779</a>
               </div>
               <div className="flex items-center text-gray-400">
-                <Mail className="w-4 h-4 mr-2" />
-                <a href="mailto:pv372007@gmail.com" className="hover:text-white transition-colors">pv372007@gmail.com</a>
+                <Mail className="w-4 h-4 mr-2 flex-shrink-0" />
+                <a href="mailto:theanimeverse.in@gmail.com" className="hover:text-white transition-colors break-all">theanimeverse.in@gmail.com</a>
               </div>
             </div>
-            <div className="flex space-x-4 mt-4">
-              <a href="#" className="text-gray-400 hover:text-white transition-colors" aria-label="Instagram">
-                <Instagram className="w-5 h-5" />
-              </a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors" aria-label="Twitter">
-                <Twitter className="w-5 h-5" />
-              </a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors" aria-label="Facebook">
-                <Facebook className="w-5 h-5" />
+            <div className="mt-4">
+              <a 
+                href="https://www.instagram.com/theanimeversein/" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="inline-flex items-center text-gray-400 hover:text-white transition-colors"
+                aria-label="Instagram"
+              >
+                <Instagram className="w-5 h-5 mr-2" />
+                @theanimeversein
               </a>
             </div>
           </div>

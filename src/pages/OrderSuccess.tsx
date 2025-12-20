@@ -1,9 +1,12 @@
 import { motion } from 'framer-motion';
-import { CheckCircle, ArrowRight, Package } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { CheckCircle, ArrowRight, Package, Clock, CreditCard } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { format } from 'date-fns';
 
 const OrderSuccess = () => {
+  const location = useLocation();
+  const { orderId, orderDetails } = location.state || {};
   return (
     <div className="min-h-screen bg-background flex items-center justify-center anime-grid-bg relative px-4">
       {/* Background Effects */}
@@ -30,10 +33,65 @@ const OrderSuccess = () => {
           Order <span className="neon-text-cyan">Confirmed!</span>
         </h1>
 
-        <p className="text-muted-foreground mb-8">
+        <p className="text-muted-foreground mb-6">
           Thank you for your purchase! Your order has been placed successfully.
           You will receive a confirmation email shortly.
         </p>
+
+        {orderId && (
+          <div className="glass-card rounded-xl p-6 mb-8 text-left space-y-4">
+            <div className="flex items-center gap-3 text-green-500 mb-4">
+              <CheckCircle className="w-6 h-6" />
+              <h3 className="text-lg font-medium">Order Confirmed</h3>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-muted-foreground">Order Number</p>
+                <p className="font-medium">{orderId}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Date</p>
+                <p className="font-medium">
+                  {orderDetails?.orderDate ? 
+                    format(new Date(orderDetails.orderDate), 'MMMM d, yyyy h:mm a') : 
+                    format(new Date(), 'MMMM d, yyyy h:mm a')}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Total Amount</p>
+                <p className="font-medium">
+                  ₹{orderDetails?.orderSummary?.total?.toFixed(2) || '0.00'}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Payment Method</p>
+                <div className="flex items-center gap-2">
+                  <CreditCard className="w-4 h-4 text-muted-foreground" />
+                  <span className="font-medium">
+                    {orderDetails?.paymentMethod || 'Online Payment'}
+                  </span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="pt-4 mt-4 border-t">
+              <p className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
+                <Clock className="w-4 h-4" />
+                Your order is being processed. We'll notify you once it's on its way.
+              </p>
+              <Button 
+                asChild 
+                variant="outline" 
+                className="w-full mt-2"
+              >
+                <Link to="/orders">
+                  View Order Details
+                </Link>
+              </Button>
+            </div>
+          </div>
+        )}
 
         <div className="glass-card rounded-xl p-6 mb-8">
           <div className="flex items-center justify-center gap-3 text-secondary">

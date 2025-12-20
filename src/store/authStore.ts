@@ -81,10 +81,23 @@ export const useAuthStore = create<AuthStore>()(
 
           if (error) {
             console.error('Login error:', error.message);
+            
+            // Check if the error is due to email not being verified
+            if (error.message.includes('Email not confirmed')) {
+              throw new Error('Please verify your email before logging in. Check your inbox for a verification link.');
+            }
+            
             return false;
           }
 
           if (data.user) {
+            // Check if the user's email is verified
+            if (!data.user.email_confirmed_at) {
+              // Sign out the user if email is not verified
+              await supabase.auth.signOut();
+              throw new Error('Please verify your email before logging in. Check your inbox for a verification link.');
+            }
+            
             const user = mapSupabaseUser(data.user, data.user.user_metadata);
             set({
               user,
@@ -94,9 +107,10 @@ export const useAuthStore = create<AuthStore>()(
           }
 
           return false;
-        } catch (error) {
+        } catch (error: any) {
           console.error('Login error:', error);
-          return false;
+          // Re-throw the error so it can be handled by the UI
+          throw error;
         }
       },
 
@@ -108,7 +122,9 @@ export const useAuthStore = create<AuthStore>()(
             options: {
               data: {
                 name: name,
+                email_redirect_to: `${window.location.origin}?type=signup&email=${encodeURIComponent(email)}`,
               },
+              emailRedirectTo: `${window.location.origin}?type=signup&email=${encodeURIComponent(email)}`,
             },
           });
 
@@ -117,12 +133,10 @@ export const useAuthStore = create<AuthStore>()(
             return false;
           }
 
+          // Don't sign in automatically, wait for email verification
           if (data.user) {
-            const user = mapSupabaseUser(data.user, { name });
-            set({
-              user,
-              isAuthenticated: true,
-            });
+            // We'll return true to indicate the signup was successful
+            // but we won't set isAuthenticated to true yet
             return true;
           }
 

@@ -4,6 +4,7 @@ import { MapPin, User, Mail, Phone, ArrowLeft, Loader2, QrCode } from 'lucide-re
 import { QRCodeSVG } from 'qrcode.react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useCartStore } from '@/store/cartStore';
+import { useOrderStore } from '@/store/orderStore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -14,6 +15,7 @@ import Footer from '@/components/Footer';
 
 const Checkout = () => {
   const { items, clearCart } = useCartStore();
+  const { addOrder } = useOrderStore();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -137,16 +139,32 @@ const Checkout = () => {
         URL.revokeObjectURL(url);
       }, 100);
 
+      // Save order to order store
+      const order = {
+        ...orderData,
+        status: 'pending' as const
+      };
+      addOrder(order);
+      
       setPaymentComplete(true);
       clearCart();
+      
+      // Save order ID to local storage for the order success page
+      localStorage.setItem('lastOrderId', orderId);
+      
       toast({
         title: "Order Placed!",
-        description: "Your order has been placed successfully!",
+        description: `Order #${orderId} has been placed successfully!`,
       });
 
       // Navigate to success page after a short delay
       setTimeout(() => {
-        navigate('/order-success', { state: { orderId } });
+        navigate('/order-success', { 
+          state: { 
+            orderId,
+            orderDetails: order
+          } 
+        });
       }, 2000);
       
     } catch (error) {
