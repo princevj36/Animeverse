@@ -1,15 +1,44 @@
+// profile.tsx
+
 import { motion } from 'framer-motion';
-import { User, Mail, Package, Heart, Settings, LogOut } from 'lucide-react';
+import { User, Mail, Package, Heart, LogOut, Settings } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useAuthStore } from '@/store/authStore';
 import { Button } from '@/components/ui/button';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Link } from 'react-router-dom';
 
 const Profile = () => {
-  // Mock user data since we're removing authentication
-  const user = {
-    name: 'Guest User',
-    email: 'guest@example.com'
+  const { user, isAuthenticated, logout } = useAuthStore();
+  const navigate = useNavigate();
+
+  if (!isAuthenticated || !user) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <main className="pt-24 pb-16">
+          <div className="container mx-auto px-4 text-center py-20">
+            <User className="w-24 h-24 mx-auto mb-6 text-muted-foreground" />
+            <h1 className="font-display text-3xl font-bold mb-4">Please log in</h1>
+            <p className="text-muted-foreground mb-8">
+              You need to be logged in to view your profile
+            </p>
+            <Link to="/auth">
+              <Button variant="neon" size="lg">
+                Login / Sign Up
+              </Button>
+            </Link>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
   };
 
   return (
@@ -38,7 +67,7 @@ const Profile = () => {
             {/* Quick Actions */}
             <div className="grid sm:grid-cols-2 gap-4 mb-8">
               <Link
-                to="/orders"
+                to="/cart"
                 className="glass-card rounded-xl p-6 flex items-center gap-4 hover:neon-border transition-all"
               >
                 <div className="p-3 bg-primary/20 rounded-lg">
@@ -73,18 +102,18 @@ const Profile = () => {
                 </div>
               </div>
 
-              <Link
-                to="/"
-                className="glass-card rounded-xl p-6 flex items-center gap-4 hover:border-primary transition-all text-left"
+              <button
+                onClick={handleLogout}
+                className="glass-card rounded-xl p-6 flex items-center gap-4 hover:border-destructive transition-all text-left"
               >
-                <div className="p-3 bg-primary/20 rounded-lg">
-                  <LogOut className="w-6 h-6 text-primary" />
+                <div className="p-3 bg-destructive/20 rounded-lg">
+                  <LogOut className="w-6 h-6 text-destructive" />
                 </div>
                 <div>
-                  <h3 className="font-display font-semibold">Back to Home</h3>
-                  <p className="text-sm text-muted-foreground">Return to homepage</p>
+                  <h3 className="font-display font-semibold text-destructive">Logout</h3>
+                  <p className="text-sm text-muted-foreground">Sign out</p>
                 </div>
-              </Link>
+              </button>
             </div>
           </motion.div>
         </div>
