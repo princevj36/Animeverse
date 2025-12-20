@@ -1,3 +1,5 @@
+// profile.tsx
+
 import { motion } from 'framer-motion';
 import { User, Mail, Package, Heart, LogOut, Settings } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';

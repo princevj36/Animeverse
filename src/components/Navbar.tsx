@@ -1,3 +1,5 @@
+// Navbar with auth
+
 import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingCart, Heart, User, Menu, Search, X } from 'lucide-react';
 import { useState } from 'react';

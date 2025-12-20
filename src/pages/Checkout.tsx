@@ -20,12 +20,12 @@ const Checkout = () => {
   const navigate = useNavigate();
 
   // State for form and UI
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showQR, setShowQR] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentComplete, setPaymentComplete] = useState(false);
   const [discount, setDiscount] = useState(0);
   const [couponCode, setCouponCode] = useState('');
+  const [orderId, setOrderId] = useState('');
 
   // Form data state
   const [formData, setFormData] = useState({
@@ -90,12 +90,12 @@ const Checkout = () => {
       setIsProcessing(true);
       
       // Create order data
-      const orderId = `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
       const orderData = {
         orderId,
         customerName: `${formData.firstName} ${formData.lastName}`.trim(),
         email: formData.email,
         phone: formData.phone,
+        shippingAddress: `${formData.address}, ${formData.city}, ${formData.state} - ${formData.zipCode}, ${formData.country}`,
         address: {
           street: formData.address,
           city: formData.city,
@@ -121,23 +121,21 @@ const Checkout = () => {
         paymentMethod: 'UPI'
       };
 
-      // Save order data as JSON file
-      const dataStr = JSON.stringify(orderData, null, 2);
-      const dataBlob = new Blob([dataStr], { type: 'application/json' });
-      const downloadLink = document.createElement('a');
-      const url = URL.createObjectURL(dataBlob);
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      // Send order data to Google Sheets
+      // TODO: Replace with your actual Google Apps Script Web App URL
+      const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwpoSTn9AuTMiymYOz8BF-s3ml_jw_aKPbJpS86u0rHq14UQbck_p55N7O27ngzFZI/exec';
       
-      downloadLink.href = url;
-      downloadLink.download = `order_${orderId}_${timestamp}.json`;
-      document.body.appendChild(downloadLink);
-      downloadLink.click();
-      
-      // Clean up
-      setTimeout(() => {
-        document.body.removeChild(downloadLink);
-        URL.revokeObjectURL(url);
-      }, 100);
+      const response = await fetch(GOOGLE_SCRIPT_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain',
+        },
+        body: JSON.stringify(orderData)
+      });
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
 
       // Save order to order store
       const order = {
@@ -176,12 +174,13 @@ const Checkout = () => {
       });
     } finally {
       setIsProcessing(false);
-      setIsSubmitting(false);
     }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const newOrderId = `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    setOrderId(newOrderId);
     setShowQR(true);
   };
 
@@ -349,16 +348,8 @@ const Checkout = () => {
                   <Button
                     type="submit"
                     className="w-full"
-                    disabled={isSubmitting}
                   >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Processing...
-                      </>
-                    ) : (
-                      'Proceed to Payment'
-                    )}
+                    Proceed to Payment
                   </Button>
                 </CardContent>
               </Card>
@@ -384,7 +375,7 @@ const Checkout = () => {
             
             <div className="bg-white p-4 rounded-lg mb-4 flex justify-center">
               <QRCodeSVG 
-                value={`upi://pay?pa=9414378779-2@axl&pn=AnimeStore&am=${total}&tn=Order-${Date.now()}`}
+                value={`upi://pay?pa=9414378779-2@axl&pn=AnimeStore&am=${total.toFixed(2)}&cu=INR&tn=${orderId}`}
                 size={200}
                 level="H"
                 includeMargin={true}

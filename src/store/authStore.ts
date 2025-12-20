@@ -1,7 +1,5 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { supabase } from '@/lib/supabase';
-import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 interface User {
   id: string;
@@ -11,25 +9,11 @@ interface User {
 }
 
 interface AuthStore {
-  user: User | null;
+  user: User;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
-  signup: (name: string, email: string, password: string) => Promise<boolean>;
-  logout: () => Promise<void>;
-  initializeAuth: () => Promise<void>;
+  initializeAuth: () => void;
 }
-
-const mapSupabaseUser = (supabaseUser: SupabaseUser | null, metadata?: { name?: string }): User | null => {
-  if (!supabaseUser) return null;
-  
-  return {
-    id: supabaseUser.id,
-    name: metadata?.name || supabaseUser.user_metadata?.name || supabaseUser.email?.split('@')[0] || 'User',
-    email: supabaseUser.email || '',
-    avatar: supabaseUser.user_metadata?.avatar_url,
-  };
-};
 
 export const useAuthStore = create<AuthStore>()(
   persist(
@@ -81,23 +65,10 @@ export const useAuthStore = create<AuthStore>()(
 
           if (error) {
             console.error('Login error:', error.message);
-            
-            // Check if the error is due to email not being verified
-            if (error.message.includes('Email not confirmed')) {
-              throw new Error('Please verify your email before logging in. Check your inbox for a verification link.');
-            }
-            
             return false;
           }
 
           if (data.user) {
-            // Check if the user's email is verified
-            if (!data.user.email_confirmed_at) {
-              // Sign out the user if email is not verified
-              await supabase.auth.signOut();
-              throw new Error('Please verify your email before logging in. Check your inbox for a verification link.');
-            }
-            
             const user = mapSupabaseUser(data.user, data.user.user_metadata);
             set({
               user,
@@ -107,10 +78,9 @@ export const useAuthStore = create<AuthStore>()(
           }
 
           return false;
-        } catch (error: any) {
+        } catch (error) {
           console.error('Login error:', error);
-          // Re-throw the error so it can be handled by the UI
-          throw error;
+          return false;
         }
       },
 
@@ -122,9 +92,7 @@ export const useAuthStore = create<AuthStore>()(
             options: {
               data: {
                 name: name,
-                email_redirect_to: `${window.location.origin}?type=signup&email=${encodeURIComponent(email)}`,
               },
-              emailRedirectTo: `${window.location.origin}?type=signup&email=${encodeURIComponent(email)}`,
             },
           });
 
@@ -133,10 +101,12 @@ export const useAuthStore = create<AuthStore>()(
             return false;
           }
 
-          // Don't sign in automatically, wait for email verification
           if (data.user) {
-            // We'll return true to indicate the signup was successful
-            // but we won't set isAuthenticated to true yet
+            const user = mapSupabaseUser(data.user, { name });
+            set({
+              user,
+              isAuthenticated: true,
+            });
             return true;
           }
 
