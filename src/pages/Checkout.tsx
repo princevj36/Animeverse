@@ -147,7 +147,7 @@ const Checkout = () => {
 
       // Navigate to success page after a short delay
       setTimeout(() => {
-        navigate('/order-success', { state: { orderId } });
+        navigate('/order-success', { state: { orderId, total, amount: total } });
       }, 2000);
       
     } catch (error) {
