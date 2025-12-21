@@ -4,7 +4,6 @@ import { MapPin, User, Mail, Phone, ArrowLeft, Loader2, QrCode } from 'lucide-re
 import { QRCodeSVG } from 'qrcode.react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useCartStore } from '@/store/cartStore';
-import { useOrderStore } from '@/store/orderStore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -15,7 +14,6 @@ import Footer from '@/components/Footer';
 
 const Checkout = () => {
   const { items, clearCart } = useCartStore();
-  const { addOrder } = useOrderStore();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -26,6 +24,8 @@ const Checkout = () => {
   const [discount, setDiscount] = useState(0);
   const [couponCode, setCouponCode] = useState('');
   const [orderId, setOrderId] = useState('');
+  const [transactionId, setTransactionId] = useState('');
+  const [showTransactionInput, setShowTransactionInput] = useState(false);
 
   // Form data state
   const [formData, setFormData] = useState({
@@ -92,6 +92,7 @@ const Checkout = () => {
       // Create order data
       const orderData = {
         orderId,
+        transactionId,
         customerName: `${formData.firstName} ${formData.lastName}`.trim(),
         email: formData.email,
         phone: formData.phone,
@@ -137,32 +138,16 @@ const Checkout = () => {
         throw new Error('Network response was not ok');
       }
 
-      // Save order to order store
-      const order = {
-        ...orderData,
-        status: 'pending' as const
-      };
-      addOrder(order);
-      
       setPaymentComplete(true);
       clearCart();
-      
-      // Save order ID to local storage for the order success page
-      localStorage.setItem('lastOrderId', orderId);
-      
       toast({
         title: "Order Placed!",
-        description: `Order #${orderId} has been placed successfully!`,
+        description: "Your order has been placed, you will soon receive email after confirmation",
       });
 
       // Navigate to success page after a short delay
       setTimeout(() => {
-        navigate('/order-success', { 
-          state: { 
-            orderId,
-            orderDetails: order
-          } 
-        });
+        navigate('/order-success', { state: { orderId } });
       }, 2000);
       
     } catch (error) {
@@ -365,7 +350,7 @@ const Checkout = () => {
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">Complete Your Payment</h3>
               <button 
-                onClick={() => setShowQR(false)} 
+                onClick={() => { setShowQR(false); setShowTransactionInput(false); }} 
                 className="text-muted-foreground hover:text-foreground"
                 disabled={isProcessing}
               >
@@ -373,42 +358,74 @@ const Checkout = () => {
               </button>
             </div>
             
-            <div className="bg-white p-4 rounded-lg mb-4 flex justify-center">
-              <QRCodeSVG 
-                value={`upi://pay?pa=9414378779-2@axl&pn=AnimeStore&am=${total.toFixed(2)}&cu=INR&tn=${orderId}`}
-                size={200}
-                level="H"
-                includeMargin={true}
-              />
-            </div>
-            
-            <p className="text-sm text-muted-foreground mb-4 text-center">
-              Scan the QR code to complete payment
-            </p>
-            
-            <div className="flex justify-center gap-4">
-              <Button
-                variant="outline"
-                onClick={() => setShowQR(false)}
-                disabled={isProcessing}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={completeOrder}
-                disabled={isProcessing}
-                className="bg-primary hover:bg-primary/90"
-              >
-                {isProcessing ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  'I have paid'
-                )}
-              </Button>
-            </div>
+            {!showTransactionInput ? (
+              <>
+                <div className="bg-white p-4 rounded-lg mb-4 flex justify-center">
+                  <QRCodeSVG 
+                    value={`upi://pay?pa=9414378779-2@axl&pn=AnimeStore&am=${total.toFixed(2)}&cu=INR&tn=${orderId}`}
+                    size={200}
+                    level="H"
+                    includeMargin={true}
+                  />
+                </div>
+                
+                <p className="text-sm text-muted-foreground mb-4 text-center">
+                  Scan the QR code to complete payment
+                </p>
+                
+                <div className="flex justify-center gap-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowQR(false)}
+                    disabled={isProcessing}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={() => setShowTransactionInput(true)}
+                    disabled={isProcessing}
+                    className="bg-primary hover:bg-primary/90"
+                  >
+                    I have paid
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground text-center">
+                  Please enter the last 6 digits of your transaction ID to verify your payment.
+                </p>
+                <Input
+                  placeholder="Last 6 digits of Transaction ID"
+                  value={transactionId}
+                  onChange={(e) => setTransactionId(e.target.value)}
+                  maxLength={6}
+                />
+                <div className="flex justify-center gap-4">
+                   <Button
+                    variant="outline"
+                    onClick={() => setShowTransactionInput(false)}
+                    disabled={isProcessing}
+                  >
+                    Back
+                  </Button>
+                  <Button
+                    onClick={completeOrder}
+                    disabled={isProcessing || transactionId.length < 6}
+                    className="bg-primary hover:bg-primary/90 flex-1"
+                  >
+                    {isProcessing ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      'Submit'
+                    )}
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
