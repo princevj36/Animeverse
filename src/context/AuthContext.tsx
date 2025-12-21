@@ -1,29 +1,39 @@
 import { createContext, useContext, ReactNode } from 'react';
 import { useAuthStore } from '@/store/authStore';
 
-interface AuthContextType {
-  isAuthenticated: boolean;
-  user: any; // Replace 'any' with your user type
-  login: (token: string) => void;
-  logout: () => void;
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  avatar?: string;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+interface AuthContextType {
+  isAuthenticated: boolean;
+  user: User;
+}
+
+const defaultAuthContext: AuthContextType = {
+  isAuthenticated: true,
+  user: {
+    id: 'guest',
+    name: 'Guest User',
+    email: 'guest@example.com'
+  }
+};
+
+const AuthContext = createContext<AuthContextType>(defaultAuthContext);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const { user, isAuthenticated, login, logout } = useAuthStore();
+  const { user, isAuthenticated } = useAuthStore();
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, user }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
 export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
+  return useContext(AuthContext);
 };
