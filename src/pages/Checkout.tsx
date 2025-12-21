@@ -139,16 +139,12 @@ const Checkout = () => {
       }
 
       setPaymentComplete(true);
+      setShowQR(false);
       clearCart();
       toast({
-        title: "Order Placed!",
-        description: "Your order has been placed, you will soon receive email after confirmation",
+        title: "Order Received",
+        description: "Your order is received, please wait while we confirm your order.",
       });
-
-      // Navigate to success page after a short delay
-      setTimeout(() => {
-        navigate('/order-success', { state: { orderId, total, amount: total } });
-      }, 2000);
       
     } catch (error) {
       console.error('Error completing order:', error);
@@ -168,6 +164,28 @@ const Checkout = () => {
     setOrderId(newOrderId);
     setShowQR(true);
   };
+
+  if (paymentComplete) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <main className="pt-24 pb-16">
+          <div className="container mx-auto px-4 text-center py-20">
+            <div className="max-w-md mx-auto space-y-6">
+              <h1 className="text-3xl font-bold">Order Received</h1>
+              <p className="text-muted-foreground text-lg">
+                Your order is received, please wait while we confirm your order, you will receive an email upon confirmation.
+              </p>
+              <Link to="/shop">
+                <Button className="mt-8">Continue Shopping</Button>
+              </Link>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   if (items.length === 0) {
     return (
