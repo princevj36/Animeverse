@@ -378,24 +378,28 @@ const Checkout = () => {
             
             {!showTransactionInput ? (
               <>
-               <div className="bg-white p-4 rounded-lg mb-4 flex flex-col items-center gap-2">
-  <QRCodeSVG 
-    value={`upi://pay?pa=9414378779-2@axl&pn=AnimeStore&am=${total.toFixed(2)}&cu=INR&tn=${orderId}`}
-    size={200}
-    level="H"
-    includeMargin={true}
-  />
-
-  {/* UPI ID below QR */}
-  <p className="text-sm font-medium text-gray-800">
-    UPI ID: <span className="font-semibold">9414378779-2@axl</span>
-  </p>
-</div>
-
+                <div className="bg-white p-4 rounded-lg mb-4 flex justify-center">
+                  <QRCodeSVG 
+                    value={`upi://pay?pa=9414378779-2@axl&pn=AnimeStore&am=${total.toFixed(2)}&cu=INR&tn=${orderId}`}
+                    size={200}
+                    level="H"
+                    includeMargin={true}
+                  />
+                </div>
                 
                 <p className="text-sm text-muted-foreground mb-4 text-center">
-                  Scan the QR code to complete payment
+                  Scan the QR code or click the button below to pay using your preferred UPI app
                 </p>
+
+                <Button 
+                  className="w-full mb-4 bg-blue-600 hover:bg-blue-700 text-white"
+                  onClick={() => {
+                    const upiUrl = `upi://pay?pa=9414378779-2@axl&pn=AnimeStore&am=${total.toFixed(2)}&cu=INR&tn=${orderId}`;
+                    window.location.href = upiUrl;
+                  }}
+                >
+                  Pay via UPI App
+                </Button>
                 
                 <div className="flex justify-center gap-4">
                   <Button
